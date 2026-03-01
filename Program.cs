@@ -1,199 +1,271 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 
 class Program {
-    static int morality = 0;     // + = good | - = evil
-    static int ambition = 0;     // + = power-seeking | - = humble
-    static List<string> inventory = new List<string>();
+    // ===== GLOBAL STATS =====
+    static int morality = 0;      // negative = evil, positive = good
+    static int ambition = 0;
+    static int playerPower = 5;
+
+    static bool villagersSaved = false;
+    static bool shadowMarked = false;
+    static bool entityBlessing = false;
+
+    static int knightTrust = 0;
+    static bool knightAlive = true;
+
+    static Random rng = new Random();
 
     static void Main() {
-        Introduction();
+        Intro();
         VillageScene();
-        TransitionAfterVillage();
-        ForestScene();
-        TransitionAfterForest();
-        KnightScene();
-        TransitionAfterKnight();
-        GateScene();
-        Ending();
+        CrossroadScene();
+        FortressScene();
+        RuinsScene();
 
         Console.WriteLine("\nPress any key to exit...");
         Console.ReadKey();
     }//Main
 
-    //Slow typing effect
-    static void TypeWriter(string text) {
-        foreach (char c in text)
-        {
-            Console.Write(c);
-            Thread.Sleep(15);
-        }
-        Console.WriteLine();
-    }//TypeWriter
+    // ===== INTRO =====
+    static void Intro() {
+        TypeText("The kingdom of Eryndor stands on the brink of collapse.");
+        TypeText("The Heart of Shadow has resurfaced from the ruins.");
+        TypeText("Its power can save the world... or destroy it.");
+        TypeText("You have chosen to depart.");
+    }//Intro
 
-    static void Introduction() {
-        Console.Clear();
-        TypeWriter("=== SHADOWS OF ELARION ===\n");
-        TypeWriter("The kingdom is dying.");
-        TypeWriter("The Heart of Aethrys holds the balance between light and darkness.");
-        TypeWriter("If it shatters... Elarion will fall.");
-        TypeWriter("You are the only one close enough to reach it.\n");
-    }//Introduction
-
-    static int GetChoice() {
-        int choice;
-        while (!int.TryParse(Console.ReadLine(), out choice) || choice < 1 || choice > 3) {
-            Console.WriteLine("Enter 1, 2 or 3.");
-        }//while
-        return choice;
-    }//GetChoice
-
+    // ===== VILLAGE =====
     static void VillageScene() {
-        TypeWriter("\n--- THE BURNING VILLAGE ---");
-        TypeWriter("Screams break the evening silence.");
-        TypeWriter("A village is under attack.");
+        TypeText("\nA village burns in the night.");
 
-        Console.WriteLine("\n1) Help the villagers");
-        Console.WriteLine("2) Ignore them and continue");
-        Console.WriteLine("3) Take advantage of the chaos");
+        Console.WriteLine("\n1) Save the villagers");
+        Console.WriteLine("2) Ignore them");
+        Console.WriteLine("3) Plunder");
 
-        int choice = GetChoice();
+        int choice = GetChoice(3);
 
         if (choice == 1) {
-            morality++;
-            ambition--;
-            inventory.Add("Amulet of Light");
-            TypeWriter("\nYou fight bravely. The raiders flee.");
-            TypeWriter("A woman gives you an Amulet of Light.");
+            villagersSaved = true;
+            morality += 2;
+            playerPower += 1;
+            TypeText("You save as many lives as possible.");
         } else if (choice == 2) {
-            TypeWriter("\nYou grit your teeth and walk away.");
-            TypeWriter("The screams fade behind you.");
-        } else {
-            morality--;
             ambition++;
-            inventory.Add("Bag of Gold");
-            TypeWriter("\nWhile the village burns, you fill your pockets.");
-            TypeWriter("The flames illuminate your face... without remorse.");
+            TypeText("It is not your battle.");
+        } else {
+            morality -= 2;
+            playerPower += 2;
+            shadowMarked = true;
+            TypeText("You take advantage of the chaos.");
         }//if-else
+
+        KnightFirstMeeting();
     }//VillageScene
 
-    static void TransitionAfterVillage() {
-        TypeWriter("\nThe road toward the ruins grows quieter.");
+    // ===== KNIGHT =====
+    static void KnightFirstMeeting() {
+        TypeText("\nA Royal Knight emerges from the smoke.");
 
-        if (morality > 0)
-            TypeWriter("The memory of those you saved warms your heart.");
-        else if (morality < 0)
-            TypeWriter("The shadows seem to follow you... pleased.");
-        else
-            TypeWriter("The wind does not judge your actions.");
-    }//TransitionAfterVillage
+        if (morality > 0) {
+            knightTrust += 2;
+            TypeText("He looks at you with respect.");
+        } else if (morality < 0){
+            knightTrust -= 2;
+            TypeText("His gaze is cold and stern.");
+        }//if-esle
 
-    static void ForestScene() {
-        TypeWriter("\n--- THE FOREST OF ILLUSIONS ---");
-        TypeWriter("Mist twists reality.");
-        TypeWriter("A voice whispers: 'What do you truly desire?'");
+        Console.WriteLine("\n1) Offer alliance");
+        Console.WriteLine("2) Remain neutral");
+        Console.WriteLine("3) Provoke him");
 
-        Console.WriteLine("\n1) To save Elarion");
-        Console.WriteLine("2) To understand my destiny");
-        Console.WriteLine("3) To claim the Heart's power");
-
-        int choice = GetChoice();
+        int choice = GetChoice(3);
 
         if (choice == 1) {
+            knightTrust++;
             morality++;
-            ambition--;
-            TypeWriter("\nThe mist parts slightly.");
-        } else if (choice == 2) {
-            TypeWriter("\nThe forest remains uncertain, like your soul.");
-        } else {
+        } else if (choice == 3) {
+            knightTrust -= 2;
             morality--;
-            ambition++;
-            TypeWriter("\nThe shadows bow to your ambition.");
+        }//if-esle
+    }//KnightFirstMeeting
+
+    // ===== CROSSROAD =====
+    static void CrossroadScene() {
+        TypeText("\nThree roads open before you.");
+
+        Console.WriteLine("\n1) Monks' Temple");
+        Console.WriteLine("2) Stone Bridge");
+        Console.WriteLine("3) Whispering Forest");
+
+        int choice = GetChoice(3);
+
+        if (choice == 1) TempleScene();
+        else if (choice == 2) BridgeScene();
+        else ForestScene();
+    }//CrossroadScene
+
+    // ===== TEMPLE =====
+    static void TempleScene() {
+        TypeText("\nYou enter the Monks' Temple.");
+
+        if (morality >= 0) {
+            morality++;
+            playerPower += 2;
+            TypeText("You receive their blessing.");
+        } else {
+            playerPower -= 1;
+            TypeText("The sacred light repels you.");
+        }//if-esle
+    }//TempleScene
+
+    // ===== BRIDGE =====
+    static void BridgeScene() {
+        TypeText("\nA guardian watches you from the bridge.");
+
+        if (morality >= 0) {
+            playerPower += 1;
+            TypeText("He allows you to pass.");
+        } else {
+            playerPower += 1;
+            TypeText("He lets you pass, though with suspicion.");
+        }//if-esle
+    }//BridgeScene
+
+    // ===== FOREST =====
+    static void ForestScene() {
+        TypeText("\nThe Whispering Forest vibrates with energy.");
+
+        Console.WriteLine("\n1) Accept the power of the Shadow");
+        Console.WriteLine("2) Resist");
+        Console.WriteLine("3) Seek the source");
+
+        int choice = GetChoice(3);
+
+        if (choice == 1) {
+            if (morality < 0) {
+                playerPower += 2;
+            } else {
+                playerPower -= 1;
+            }//if-esle
+
+            morality--;
+            shadowMarked = true;
+            TypeText("The Shadow flows through you.");
+        } else if (choice == 2) {
+            morality++;
+            TypeText("You resist.");
+        } else {
+            entityBlessing = true;
+            playerPower += 1;
+            TypeText("A neutral entity watches you.");
         }//if-else
     }//ForestScene
 
-    static void TransitionAfterForest() {
-        TypeWriter("\nYou emerge from the forest changed.");
+    // ===== FORTRESS =====
+    static void FortressScene() {
+        TypeText("\nYou reach a ruined fortress.");
 
-        if (ambition > 1)
-            TypeWriter("A hunger for power grows inside you.");
-        else if (ambition < 0)
-            TypeWriter("Your steps feel lighter, free from greed.");
-    }//TransitionAfterForest
+        Console.WriteLine("\n1) Explore");
+        Console.WriteLine("2) Search for relics");
+        Console.WriteLine("3) Rest");
 
-    static void KnightScene() {
-        TypeWriter("\n--- THE WOUNDED KNIGHT ---");
-        TypeWriter("Another chosen lies bleeding on the ground.");
-
-        Console.WriteLine("\n1) Help him");
-        Console.WriteLine("2) Leave him");
-        Console.WriteLine("3) Eliminate a future rival");
-
-        int choice = GetChoice();
+        int choice = GetChoice(3);
 
         if (choice == 1) {
-            morality++;
-            ambition--;
-            TypeWriter("\nThe knight whispers: 'I owe you my life.'");
+            playerPower += 2;
         } else if (choice == 2) {
-            TypeWriter("\nYou avoid his gaze and move on.");
-        } else {
-            morality--;
-            ambition++;
-            TypeWriter("\nSilence falls after his final breath.");
-        }//if-else
-    }//KnightScene
-
-    static void TransitionAfterKnight() {
-        if (morality >= 2)
-            TypeWriter("\nYou still feel human.");
-        else if (morality <= -2)
-            TypeWriter("\nSomething inside you is fading.");
-        else
-            TypeWriter("\nEvery step brings you closer to destiny.");
-    }//TransitionAfterKnight
-
-    static void GateScene() {
-        TypeWriter("\n--- THE GATE OF THE HEART ---");
-        TypeWriter("An ancient spirit rises from the light.");
-
-        Console.WriteLine("\n1) I will sacrifice myself for the kingdom");
-        Console.WriteLine("2) What is the price?");
-        Console.WriteLine("3) The power will be mine");
-
-        int choice = GetChoice();
-
-        if (choice == 1) {
             morality++;
-            ambition--;
-        } else if (choice == 3) {
-            morality--;
-            ambition++;
-        }//if-else
-    }//GateScene
-
-    static void Ending() {
-        TypeWriter("\n--- THE HEART OF AETHRYS ---");
-
-        if (morality >= 4) {
-            TypeWriter("The knight you saved returns and sacrifices himself for you.");
-            TypeWriter("SECRET ENDING: Legendary Hero.");
-        } else if (morality <= -4) {
-            TypeWriter("The Heart turns completely dark.");
-            TypeWriter("SECRET ENDING: Lord of Shadows.");
-        } else if (morality >= 2) {
-            TypeWriter("You sacrifice yourself. The kingdom is reborn.");
-            TypeWriter("ENDING: Radiant Martyr.");
-        } else if (morality <= -2) {
-            TypeWriter("You absorb the Heart's power and dominate Elarion.");
-            TypeWriter("ENDING: Dark Tyrant.");
         } else {
-            TypeWriter("The world survives... but remains fragile.");
-            TypeWriter("ENDING: Fragile Balance.");
-        }//if-else
+            TypeText("You decide to rest...");
 
-        TypeWriter($"\nMorality: {morality}");
-        TypeWriter($"Ambition: {ambition}");
-    }//GateScene
-}//class Program
+            if (morality < 0 && knightAlive) {
+                TypeText("In the dead of night, the Knight attacks you.");
+
+                // 80% chance knight wins
+                int roll = rng.Next(100);
+                if (roll < 80) {
+                    TypeText("You are caught off guard and slain.");
+                    TypeText("\nENDING: The Knight Savior.");
+                    Environment.Exit(0);
+                } else {
+                    TypeText("You miraculously manage to react.");
+                    knightAlive = false;
+                }//if-esle
+            }//if
+        }//if-else
+    }//FortressScene
+
+    // ===== RUINS =====
+    static void RuinsScene() {
+        TypeText("\nThe Temple Ruins stand before you.");
+        TypeText("The Heart of Shadow pulses.");
+
+        if (morality < 0 && knightAlive) {
+            TypeText("\nThe Knight confronts you.");
+
+            bool win = FightKnight();
+
+            if (!win) {
+                TypeText("The Knight defeats you.");
+                TypeText("He destroys the Heart.");
+                TypeText("\nENDING: The Knight Savior.");
+                return;
+            }//if
+
+            knightAlive = false;
+            morality--;
+        }//if
+
+        FinalDecision();
+    }//RuinsScene
+
+    // ===== FINAL =====
+    static void FinalDecision() {
+        if (morality >= 3 && knightAlive) {
+            TypeText("The Knight sacrifices himself to stabilize the Heart.");
+            TypeText("\nENDING: The Knight's Sacrifice.");
+        } else if (morality >= 3) {
+            TypeText("You sacrifice yourself to destroy the Heart.");
+            TypeText("\nENDING: Martyr of the Kingdom.");
+        } else if (morality <= -3) {
+            TypeText("You absorb the power of the Heart.");
+            TypeText("\nENDING: Dark Lord.");
+        } else if (entityBlessing) {
+            TypeText("You seal the Heart.");
+            TypeText("\nENDING: Keeper of Balance.");
+        } else {
+            TypeText("The power explodes.");
+            TypeText("\nENDING: Catastrophe.");
+        }//if-else
+    }//FinalDecision
+
+    // ===== COMBAT =====
+    static bool FightKnight() {
+        TypeText("\n The duel begins!");
+
+        int playerScore = playerPower + rng.Next(1, 7);
+        int knightScore = 7 + rng.Next(1, 7);
+
+        TypeText($"Your strength: {playerScore}");
+        TypeText($"Knight's strength: {knightScore}");
+
+        return playerScore > knightScore;
+    }//FightKnight
+
+    // ===== UTIL =====
+    static int GetChoice(int max) {
+        int choice;
+        while (!int.TryParse(Console.ReadLine(), out choice) || choice < 1 || choice > max)
+            Console.WriteLine("Invalid choice.");
+        return choice;
+    }// GetChoice
+
+    static void TypeText(string text) {
+        foreach (char c in text) {
+            Console.Write(c);
+            Thread.Sleep(10);
+        }//foreach
+        Console.WriteLine();
+    }//TypeText
+}//Program
