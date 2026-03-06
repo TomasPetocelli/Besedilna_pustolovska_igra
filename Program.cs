@@ -176,6 +176,24 @@ class Program {
             playerPower += 2;
         } else if (choice == 2) {
             morality++;
+            TypeText("While searching the ruins, a hidden trap activates.");
+
+            if (knightAlive)
+            {
+                TypeText("The Knight pushes you away and takes the blow.");
+
+                int roll = rng.Next(100);
+
+                if (roll < 50)
+                {
+                    knightAlive = false;
+                    TypeText("The Knight is mortally wounded protecting you.");
+                }
+                else
+                {
+                    TypeText("The Knight survives, though badly injured.");
+                }
+            }
         } else {
             TypeText("You decide to rest...");
 
@@ -222,6 +240,8 @@ class Program {
 
     // ===== FINAL =====
     static void FinalDecision() {
+        Console.WriteLine($"\nMorality: {morality}");
+        Console.WriteLine($"Knight Alive: {knightAlive}");
         if (morality >= 3 && knightAlive) {
             TypeText("The Knight sacrifices himself to stabilize the Heart.");
             TypeText("\nENDING: The Knight's Sacrifice.");
